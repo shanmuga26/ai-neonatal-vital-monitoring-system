@@ -48,4 +48,15 @@ A **web dashboard** displays real-time vitals trends through dynamic graphs.
 ---
 
 ## 📁 Project Structure
+ai-neonatal-vital-monitoring-system/
+├── app.py               # Flask server with API & ML logic
+├── model_knn.pkl        # Trained KNN model
+├── ecg_data/            # ECG data samples (optional)
+├── templates/           # HTML templates for dashboard
+├── static/              # CSS, JS (Chart.js)
+├── esp32_code.ino       # ESP32 script to send vitals
+├── .env                 # Secrets (Twilio)
+├── .gitignore           # Ignores env and pycache
+└── README.md            # This documentation
+
 
