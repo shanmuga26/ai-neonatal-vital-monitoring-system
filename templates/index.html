@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Monitoring Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .dashboard-title {
+            color: #2c3e50;
+            padding: 20px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .vitals-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .vitals-card:hover {
+            transform: translateY(-5px);
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+        .normal {
+            color: #28a745;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        .danger {
+            color: #dc3545;
+        }
+        .alert-box {
+            border-left: 4px solid #dc3545;
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .alert-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .status-indicator {
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .prediction-status {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 30px;
+        }
+        #refreshStatus {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row dashboard-title">
+            <div class="col-md-6">
+                <h1><i class="fas fa-heartbeat"></i> Patient Monitoring Dashboard</h1>
+            </div>
+            <div class="col-md-6 text-end">
+                <div id="currentTime" class="h4"></div>
+                <div id="refreshStatus">Last updated: Just now</div>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Current Status</h5>
+                        <div id="predictionStatus" class="prediction-status normal">
+                            <span id="statusIndicator" class="status-indicator"></span>
+                            <span id="predictionValue">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vital Signs -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-heart"></i> Heart Rate</h5>
+                        <div id="bpmValue" class="card-value normal">0</div>
+                        <p class="card-text">BPM</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-lungs"></i> Oxygen Saturation</h5>
+                        <div id="spo2Value" class="card-value normal">0</div>
+                        <p class="card-text">SpO2 %</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-temperature-high"></i> Temperature</h5>
+                        <div id="tempValue" class="card-value normal">0</div>
+                        <p class="card-text">°C</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-wave-square"></i> ECG</h5>
+                        <div id="ecgValue" class="card-value normal">0</div>
+                        <p class="card-text">Value</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-wind"></i> Respiration</h5>
+                        <div id="respValue" class="card-value normal">0</div>
+                        <p class="card-text">Breaths/min</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-bed"></i> Sleep Activity</h5>
+                        <div id="sleepValue" class="card-value normal">0</div>
+                        <p class="card-text">Value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line"></i> Heart Rate Trend</h5>
+                        <div class="chart-container">
+                            <canvas id="heartRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line"></i> Oxygen Saturation Trend</h5>
+                        <div class="chart-container">
+                            <canvas id="oxygenChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line"></i> Temperature Trend</h5>
+                        <div class="chart-container">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card vitals-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line"></i> Respiration Trend</h5>
+                        <div class="chart-container">
+                            <canvas id="respChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card vitals-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-exclamation-triangle"></i> Recent Alerts</h5>
+                        <div id="alertsContainer">
+                            <p class="text-muted text-center">No recent alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        let heartRateChart, oxygenChart, tempChart, respChart;
+        
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        },
+                        ticks: {
+                            maxTicksLimit: 8,
+                            maxRotation: 0
+                        }
+                    },
+                    y: {
+                        display: true,
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                animation: {
+                    duration: 500
+                }
+            };
+            
+            // Heart rate chart
+            heartRateChart = new Chart(
+                document.getElementById('heartRateChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Heart Rate (BPM)',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: {
+                                ...chartOptions.scales.y,
+                                title: {
+                                    display: true,
+                                    text: 'BPM'
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // Oxygen saturation chart
+            oxygenChart = new Chart(
+                document.getElementById('oxygenChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'SpO2 (%)',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: {
+                                ...chartOptions.scales.y,
+                                title: {
+                                    display: true,
+                                    text: 'SpO2 %'
+                                },
+                                min: 85,
+                                max: 100
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // Temperature chart
+            tempChart = new Chart(
+                document.getElementById('tempChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: [],
+                            borderColor: 'rgb(255, 159, 64)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: {
+                                ...chartOptions.scales.y,
+                                title: {
+                                    display: true,
+                                    text: '°C'
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // Respiration chart
+            respChart = new Chart(
+                document.getElementById('respChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Respiration Rate',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: {
+                                ...chartOptions.scales.y,
+                                title: {
+                                    display: true,
+                                    text: 'Breaths/min'
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        // Update charts with new data
+        function updateCharts(historical) {
+            if (!historical || !historical.timestamps) return;
+            
+            // Format timestamps for display
+            const formattedTimes = historical.timestamps.map(timestamp => {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            });
+            
+            // Update heart rate chart
+            heartRateChart.data.labels = formattedTimes;
+            heartRateChart.data.datasets[0].data = historical.bpm;
+            heartRateChart.update();
+            
+            // Update oxygen chart
+            oxygenChart.data.labels = formattedTimes;
+            oxygenChart.data.datasets[0].data = historical.spo2;
+            oxygenChart.update();
+            
+            // Update temperature chart
+            tempChart.data.labels = formattedTimes;
+            tempChart.data.datasets[0].data = historical.temperature;
+            tempChart.update();
+            
+            // Update respiration chart
+            respChart.data.labels = formattedTimes;
+            respChart.data.datasets[0].data = historical.respiration;
+            respChart.update();
+        }
+
+        // Format current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('currentTime').innerText = now.toLocaleDateString('en-US', options);
+        }
+
+        // Update last refresh timestamp
+        function updateRefreshStatus() {
+            const now = new Date();
+            document.getElementById('refreshStatus').innerText = `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        // Update vital signs with appropriate color coding
+        function updateVitalSigns(data) {
+            // Heart rate (BPM)
+            const bpm = parseFloat(data.bpm);
+            const bpmElement = document.getElementById('bpmValue');
+            bpmElement.innerText = bpm.toFixed(1);
+            
+            if (bpm < 60 || bpm > 100) {
+                bpmElement.className = 'card-value danger';
+            } else if (bpm < 65 || bpm > 90) {
+                bpmElement.className = 'card-value warning';
+            } else {
+                bpmElement.className = 'card-value normal';
+            }
+            
+            // SpO2
+            const spo2 = parseFloat(data.spo2);
+            const spo2Element = document.getElementById('spo2Value');
+            spo2Element.innerText = spo2.toFixed(1);
+            
+            if (spo2 < 92) {
+                spo2Element.className = 'card-value danger';
+            } else if (spo2 < 95) {
+                spo2Element.className = 'card-value warning';
+            } else {
+                spo2Element.className = 'card-value normal';
+            }
+            
+            // Temperature
+            const temp = parseFloat(data.temperature);
+            const tempElement = document.getElementById('tempValue');
+            tempElement.innerText = temp.toFixed(1);
+            
+            if (temp < 36 || temp > 38) {
+                tempElement.className = 'card-value danger';
+            } else if (temp < 36.5 || temp > 37.5) {
+                tempElement.className = 'card-value warning';
+            } else {
+                tempElement.className = 'card-value normal';
+            }
+            
+            // ECG
+            document.getElementById('ecgValue').innerText = parseFloat(data.ecg).toFixed(1);
+            
+            // Respiration
+            const resp = parseFloat(data.respiration);
+            const respElement = document.getElementById('respValue');
+            respElement.innerText = resp.toFixed(1);
+            
+            if (resp < 12 || resp > 20) {
+                respElement.className = 'card-value warning';
+            } else {
+                respElement.className = 'card-value normal';
+            }
+            
+            // Sleep Activity
+            document.getElementById('sleepValue').innerText = parseFloat(data.sleep).toFixed(1);
+            
+            // Prediction Status
+            const predictionElement = document.getElementById('predictionStatus');
+            const predictionValueElement = document.getElementById('predictionValue');
+            const statusIndicator = document.getElementById('statusIndicator');
+            predictionValueElement.innerText = data.prediction;
+            
+            if (data.prediction === 'Normal') {
+                predictionElement.className = 'prediction-status normal';
+                statusIndicator.style.backgroundColor = '#28a745';
+            } else {
+                predictionElement.className = 'prediction-status danger';
+                statusIndicator.style.backgroundColor = '#dc3545';
+            }
+        }
+
+        // Update alerts list
+        function updateAlerts(alerts) {
+            const alertsContainer = document.getElementById('alertsContainer');
+            
+            if (!alerts || alerts.length === 0) {
+                alertsContainer.innerHTML = '<p class="text-muted text-center">No recent alerts</p>';
+                return;
+            }
+            
+            let alertsHTML = '';
+            
+            alerts.forEach(alert => {
+                const alertTime = new Date(alert.timestamp);
+                const formattedTime = alertTime.toLocaleString();
+                
+                alertsHTML += `
+                    <div class="alert-box mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-danger">${alert.type}</span>
+                            <span class="alert-timestamp">${formattedTime}</span>
+                        </div>
+                        <p class="mb-1 mt-2"><strong>${alert.message}</strong></p>
+                        <p class="mb-0 text-muted">${alert.details}</p>
+                    </div>
+                `;
+            });
+            
+            alertsContainer.innerHTML = alertsHTML;
+        }
+
+        // Fetch data from server
+        function fetchData() {
+            fetch('/api/data')
+                .then(response => response.json())
+                .then(data => {
+                    updateVitalSigns(data);
+                    updateAlerts(data.alerts);
+                    if (data.historical) {
+                        updateCharts(data.historical);
+                    }
+                    updateRefreshStatus();
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        }
+
+        // Initialize the dashboard
+        function initDashboard() {
+            updateCurrentTime();
+            initCharts();
+            fetchData();
+            
+            // Update time every second
+            setInterval(updateCurrentTime, 1000);
+            
+            // Fetch new data every 2 seconds
+            setInterval(fetchData, 2000);
+        }
+
+        // Start the dashboard when the page loads
+        $(document).ready(function() {
+            initDashboard();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Timestamp,PatientID,PatientName,Ward,HeartRate,SpO2,ECG,Respiration,SleepActivity,Temperature,Condition
+2025-05-08 23:13:24,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,-999,-999,517,0,1,32.50,Bradycardia
+2025-05-08 23:13:34,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,-999,-999,572,0,1,32.50,Hypoxemia
+2025-05-08 23:13:42,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,-999,-999,630,0,1,32.75,Hypoxemia
+2025-05-08 23:13:51,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,-999,-999,412,0,1,33.00,Bradycardia
+2025-05-08 23:14:00,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,31,-999,546,7,0,33.00,Hypoxemia
+2025-05-08 23:14:08,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,187,-999,588,46,0,33.25,Hypoxemia
+2025-05-08 23:14:16,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,39,82,490,9,1,33.25,Hypothermia
+2025-05-08 23:14:24,PT-2025-001,Ravi Kumar,Ward-7, Bed-12,55,80,609,13,0,33.25,Hypothermia
